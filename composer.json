@@ -2,6 +2,7 @@
     "name": "ciims-modules/dashboard",
     "description": "The dashboard module for CiiMS",
     "license": "MIT",
+    "version": "2.1",
     "type" : "yii-module",
     "keywords": [
         "ciims",
