@@ -25,6 +25,6 @@
     },
     "homepage": "https://www.ciims.org",
     "require": {
-	"composer/installers": "dev-master"
+	"composer/installers": "~1.0"
     }
 }
