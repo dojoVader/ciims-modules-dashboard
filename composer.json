@@ -23,8 +23,5 @@
         "wiki" : "https://github.com/charlesportwoodii/ciims-modules-dashboard/wiki/_pages",
         "source" : "https://github.com/charlesportwoodii/ciims-modules-dashboard"
     },
-    "homepage": "https://www.ciims.org",
-    "require": {
-	"composer/installers": "~1.0"
-    }
+    "homepage": "https://www.ciims.org"
 }
