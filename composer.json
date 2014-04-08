@@ -3,7 +3,7 @@
     "description": "The dashboard module for CiiMS",
     "license": "MIT",
     "version": "2.1",
-    "type" : "yii-module",
+    "type" : "drupal-module",
     "keywords": [
         "ciims",
 	"dashboard",
