@@ -1,0 +1,26 @@
+{
+    "name": "ciims-modules/dashboard",
+    "description": "The dashboard module for CiiMS",
+    "license": "MIT",
+    "type" : "yii-module",
+    "keywords": [
+        "ciims",
+	"dashboard",
+	"module"
+    ],
+    "authors": [
+        {
+            "name": "Charles R. Portwood II",
+            "email": "charlesportwoodii@ethreal.net",
+            "homepage": "https://www.erianna.com",
+            "role": "Lead Developer"
+        }
+    ],
+    "support": {
+        "email": "charlesportwoodii@ethreal.net",
+        "issues": "https://github.com/charlesportwoodii/ciims-modules-dashboard/issues",
+        "wiki" : "https://github.com/charlesportwoodii/ciims-modules-dashboard/wiki/_pages",
+        "source" : "https://github.com/charlesportwoodii/ciims-modules-dashboard"
+    },
+    "homepage": "https://www.ciims.org"
+}
