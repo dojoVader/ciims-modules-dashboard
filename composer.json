@@ -3,7 +3,7 @@
     "description": "The dashboard module for CiiMS",
     "license": "MIT",
     "version": "2.1",
-    "type" : "yii-module",
+    "type" : "drupal-module",
     "keywords": [
         "ciims",
 	"dashboard",
@@ -24,9 +24,6 @@
         "source" : "https://github.com/charlesportwoodii/ciims-modules-dashboard"
     },
     "homepage": "https://www.ciims.org",
-    "repositories": [
-        { "type" : "vcs", "url": "https://github.com/charlesportwoodii/installers" }
-    ],
     "require": {
 	"composer/installers": "dev-master"
     }
