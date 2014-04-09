@@ -23,7 +23,7 @@ class DashboardModule extends CWebModule
             'messages' => array(
                 'class' => 'ext.cii.components.CiiPHPMessageSource',
                 'basePath' => Yii::getPathOfAlias('application.modules.dashboard')
-            ):wq
+            )
         ));
 	}
 }
