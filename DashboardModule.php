@@ -24,16 +24,6 @@ class DashboardModule extends CWebModule
                 'class' => 'ext.cii.components.CiiPHPMessageSource',
                 'basePath' => Yii::getPathOfAlias('application.modules.dashboard')
             ),
-            // For some odd reason, redefining this here fixes any issues that come up with this
-            'clientScript'=>array(
-                'class' => 'ext.cii.components.CiiClientScript',
-                'packages'=>array(
-                    'jquery'=>array(
-                        'baseUrl'=>$asset,
-                        'js'=>array('jquery-2.0.0.min.js')
-                    )
-                )
-            ),
         ));
 	}
 }
