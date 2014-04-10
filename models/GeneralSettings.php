@@ -83,7 +83,7 @@ class GeneralSettings extends CiiSettingsModel
 			array('name', 'length', 'max' => 255),
 			array('dateFormat, timeFormat, defaultLanguage', 'length', 'max' => 25),
 			array('offline, preferMarkdown, sphinx_enabled, useDisqusComments, enableAPI, forceSecureSSL, useOpenstackCDN, useRackspaceCDN', 'boolean'),
-			array('sphinxHost, sphinxSource, disqus_shortname, discourseUrl, openstack_identity, openstack_username, openstack_apikey, openstack_region, openstack_container', 'length', 'max' => 255),
+			array('sphinxHost, sphinxSource, disqus_shortname, openstack_identity, openstack_username, openstack_apikey, openstack_region, openstack_container', 'length', 'max' => 255),
 			array('sphinxPort', 'numerical', 'integerOnly' => true),
 			array('bcrypt_cost', 'numerical', 'integerOnly'=>true, 'min' => 13, 'max' => 50),
 			array('searchPaginationSize, categoryPaginationSize, contentPaginationSize', 'numerical', 'integerOnly' => true, 'min' => 1, 'max' => 100),
