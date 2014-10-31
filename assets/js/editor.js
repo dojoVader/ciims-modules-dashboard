@@ -10,6 +10,8 @@ var ContentEditor = {
 
 	autosaveTimeout: null,
 
+	revisions: {},
+
 	init : function() {
 		var self = this;
 		
@@ -18,6 +20,8 @@ var ContentEditor = {
 		self.editor = new Editor({
 			element: document.querySelector('#Content_content'),
 			toolbar: [
+			  { name: 'excerpt', className: 'fa fa-caret-square-o-down', action: ContentEditor.Editor.excerpt },
+			  '|',
 			  { name: 'bold',      className: 'fa fa-bold',      action: ContentEditor.Editor.toggleBold },
 			  { name: 'italic',    className: 'fa fa-italic',    action: ContentEditor.Editor.toggleItalic },
 			  { name: 'underline', className: 'fa fa-underline', action: ContentEditor.Editor.insertUnderlineTag },
@@ -28,11 +32,9 @@ var ContentEditor = {
 			  '|',
 			  { name: 'photo', className: 'fa fa-photo',        action: ContentEditor.Editor.insertPhotoTag },
 			  //{ name: 'video', className: 'fa fa-video-camera', action: ContentEditor.Editor.insertVideoTag },
-			  { name: 'code',  className: 'fa fa-code',         action: ContentEditor.Editor.insertCodeTag },
-			  '|',
-			  { name: 'excerpt', className: 'fa fa-caret-square-o-down', action: ContentEditor.Editor.excerpt },
-			  '|',
-			  { name: 'marked', className: 'markdown-mark', 		action: ContentEditor.Editor.explainMarked }
+			  { name: 'code',  className: 'fa fa-code',         action: ContentEditor.Editor.insertCodeTag }
+			  //'|',
+			  //{ name: 'marked', className: 'markdown-mark', 		action: ContentEditor.Editor.explainMarked }
 			]
 		});
 
@@ -47,6 +49,7 @@ var ContentEditor = {
 
 		// Nanoscrollerize the preview window
 		self.nanoscroller(".preview.nano", false);
+		self.nanoscroller("#editor-sidebar .nano", false);
 
 		// lepture/editor doesn't support onLoad callback
 		setTimeout(function() {
@@ -97,6 +100,110 @@ var ContentEditor = {
 	},
 
 	/**
+	 * Loads all the revisions to be displayed
+	 * @return {[type]} [description]
+	 */
+	loadRevisions: function(clear) {
+		var self = this;
+
+		// Retrieve a list of all the revisions
+		$.ajax({
+			url: window.location.origin + '/api/content/revisions/id/' + $("#Content_id").val(),
+			type: 'GET',
+			headers: CiiMSDashboard.getRequestHeaders(),
+			beforeSend: function() {
+				$(".paginated_results ul").empty();
+
+				CiiMSDashboard.ajaxBeforeSend();
+			},
+			error: function(data) {
+				var json = $.parseJSON(data.responseText);
+
+				// unbind the scrolling event to prevent unecessary requests to the API
+				if (json.status == 404)
+					$(".paginated_results .nano .nano-content").unbind("scroll");
+			},
+			success: function(data, textStatus, jqXHR) {
+				var ul = $(".paginated_results ul");
+				$(data.response.data).each(function() {
+					self.renderLi(this, ul);
+				});
+				$(".timeago").timeago();
+
+				self.bindRevisionRollback();
+				CiiMSDashboard.ajaxSuccess(null);
+			},
+			completed: CiiMSDashboard.ajaxCompleted()
+		});
+	},
+
+	/**
+	 * Binds the behaviors to rollback a revision
+	 */
+	bindRevisionRollback: function() {
+		var self = this;
+
+		$(".rollback-revision").click(function() {
+			var vid = $(this).attr("vid");
+			var text = $(".rollback-text").text().replace("{id}", vid);
+			alertify.confirm(text, function (e) {
+				if (e)
+				{
+					self.setForm(self.revisions[vid]);
+					self.autosave();
+					$("a.details-back-button").click();
+				}
+			});
+		});
+	},
+
+	/**
+	 * Renders an LI element
+	 * @param object data
+	 * @param DOM ul
+	 * @param boolean prepend
+	 */
+	renderLi: function(data, ul, prepend) {
+		this.revisions[data.vid] = data;
+		if (prepend == undefined)
+			prepend = false;
+
+		var li = $("<li>").attr('revision', data.id),
+			info = $("<div>"),
+			side = $("<div>").addClass("icons icons-no-text");
+
+		var revisionText = $(".revisions-text").text().replace('{id}', data.vid);
+
+		var dateTime = new Date( (data.published * 1000) ),
+			titleTime = dateTime.format('F d, Y @ H:i'),
+			dateTime = dateTime.format('c');
+
+		// Build the info object
+		$(info).addClass("user-info");
+		$(info).append($("<h6>").text(data.title));
+		$(info).append($("<span>").text(revisionText));
+		$(info).append($("<span>").addClass("timeago").attr('datetime', dateTime).attr('title', titleTime));
+
+		// Build the list element
+		if ($("#Content_vid").val() == data.vid)
+			$(li).addClass("active");
+
+		$(li).append($("<img>").addClass("user-image").attr("src", "https://www.gravatar.com/avatar/" + md5(data.author.email) + "?s=40"));
+		$(li).append($(info));
+		
+		// Append the icons to the editor
+		$(side).append($("<span>").addClass("fa fa-history rollback-revision").attr("vid", data.vid));
+
+		(li).append($(info)).append($(side));
+
+		// Append it to the list
+		if (prepend)
+			$(ul).prepend($(li));
+		else
+			$(ul).append($(li));
+	},
+
+	/**
 	 * Misc jQuery functions for UI behaviors
 	 */
 	misc: function() {
@@ -121,6 +228,22 @@ var ContentEditor = {
 				$(".content-calendar").slideDown();
 		});
 
+		$("a#revisions-link").click(function(e) {
+			e.preventDefault();
+			$("#editor-sidebar").hide();
+			$(".paginated_search#revisions").show();
+			self.loadRevisions();
+			self.nanoscroller(".paginated_search .nano", false);
+		});
+
+		$("a.details-back-button").click(function(e) {
+			e.preventDefault();
+			$("#editor-sidebar").show();
+			$(".paginated_search#revisions").hide();
+
+			self.nanoscroller("#editor-sidebar .nano", false);
+		});
+
 		$("a#publish").click(function(e) {			
 			var data = self.getForm();
 
@@ -133,10 +256,7 @@ var ContentEditor = {
 			$.ajax({
 				url: window.location.origin + '/api/content/index/id/' + $("#Content_id").val(),
 				type: 'POST',
-				headers: {
-					'X-Auth-Email': self.ciims.email,
-					'X-Auth-Token': self.ciims.token
-				},
+				headers: CiiMSDashboard.getRequestHeaders(),
 				data: data,
 				beforeSend: CiiMSDashboard.ajaxBeforeSend(),
 				error: function(d) {
@@ -165,6 +285,22 @@ var ContentEditor = {
 				completed: CiiMSDashboard.ajaxCompleted()
 			});
 		});
+	},
+
+	/**
+	 * Sets the form fields
+	 */
+	setForm: function(data) {
+		var self = this;
+
+		$("form :input[id^='Content']").each(function() {
+			var name = $(this).attr("name").replace("Content[", "").replace("]", "");
+			if (data[name] != undefined)
+				$(this).val(data[name]);
+		});
+
+		data["content"] = self.editor.codemirror.setValue(data.content);
+		data["excerpt"] = self.excerptEditor.codemirror.setValue(data.excerpt);
 	},
 
 	/**
@@ -221,10 +357,7 @@ var ContentEditor = {
 		$.ajax({
 			url: window.location.origin + '/api/content/autosave/id/' + data.id,
 			type: 'POST',
-			headers: {
-				'X-Auth-Email': self.ciims.email,
-				'X-Auth-Token': self.ciims.token
-			},
+			headers: CiiMSDashboard.getRequestHeaders(),
 			data:  data,
 			beforeSend: CiiMSDashboard.ajaxBeforeSend(),
 			completed: CiiMSDashboard.ajaxCompleted()
@@ -302,11 +435,8 @@ var ContentEditor = {
 			// Then bind the dropzone element
 			var dz = new Dropzone("#content_preview div.dropzone-" + hash, {
 				url : CiiMSDashboard.getEndpoint() + "/api/content/uploadImage/id/" + $("#Content_id").val(),
-				headers: {
-					'X-Auth-Email': self.ciims.email,
-					'X-Auth-Token': self.ciims.token
-				},
-				dictDefaultMessage : "Drop files here to upload - or click",
+				headers: CiiMSDashboard.getRequestHeaders(),
+				dictDefaultMessage : "",
 				success : function(data) {
 					// Get the response data
 					var json     = $.parseJSON(data.xhr.response),
@@ -387,12 +517,13 @@ var ContentEditor = {
 			ContentEditor.excerptEditor = new Editor({
 				element: document.querySelector('#Content_excerpt'),
 				toolbar: [
-				  { name: 'photo', className: 'fa fa-photo',        action: ContentEditor.Excerpt.insertPhoto },
-		  		  //{ name: 'video', className: 'fa fa-video-camera', action: ContentEditor.Excerpt.insertVideo },
-		  		  '|',
 				  { name: 'excerpt', className: 'fa fa-caret-square-o-up', action: ContentEditor.Excerpt.excerpt },
 				  '|',
-				  { name: 'marked', className: 'markdown-mark', 		action: ContentEditor.Editor.explainMarked }
+				  { name: 'photo', className: 'fa fa-photo',        action: ContentEditor.Excerpt.insertPhoto }
+		  		  //{ name: 'video', className: 'fa fa-video-camera', action: ContentEditor.Excerpt.insertVideo },
+				  
+				  //'|',
+				  //{ name: 'marked', className: 'markdown-mark', 		action: ContentEditor.Editor.explainMarked }
 				]
 			});
 
@@ -417,7 +548,30 @@ var ContentEditor = {
 		 * @param el editor
 		 */
 		insertPhoto : function(editor) {
-			$(".image-upload").show();
+
+			if ($(".image-upload").is(":visible"))
+				$(".image-upload").hide();
+			else
+			{
+				$(".image-upload").show();
+
+				var dz = new Dropzone("#dropzone-excerpt-upload", {
+					url : CiiMSDashboard.getEndpoint() + "/api/content/uploadImage/id/" + $("#Content_id").val() + "/promote/1",
+					headers: CiiMSDashboard.getRequestHeaders(),
+					dictDefaultMessage : "",
+					success : function(data) {
+						var json = $.parseJSON(data.xhr.response);
+						var responseData = $.parseJSON(json.response);
+
+						// Remote the dropzone element
+						var el = $("<div>").attr("id", "dropzone-excerpt-upload");
+						$("#dropzone-excerpt-upload").replaceWith(el);
+						$(".image-upload").hide();
+					}
+				});
+
+				$("#dropzone-excerpt-upload").addClass("dropzone");
+			}
 		},
 
 		/**
